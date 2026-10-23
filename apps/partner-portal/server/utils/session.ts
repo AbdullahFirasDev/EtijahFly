@@ -20,6 +20,11 @@ export function apiBase(event: H3Event): string {
     console.error('[portal] NUXT_API_BASE is not configured for this deployment')
     throw createError({ statusCode: 503, statusMessage: 'API not configured' })
   }
+  // Pointing NUXT_API_BASE at the portal itself makes every API call return the SPA's HTML.
+  if (originHost(base) === getRequestHost(event, { xForwardedHost: true })) {
+    console.error('[portal] NUXT_API_BASE points at this portal instead of the Laravel API')
+    throw createError({ statusCode: 503, statusMessage: 'API not configured' })
+  }
   return base
 }
 

@@ -7,7 +7,9 @@ export function useAuth() {
 
   async function fetchMe(): Promise<Me | null> {
     try {
-      me.value = await $fetch<Me>('/api/proxy/auth/me')
+      const res = await $fetch<Me>('/api/proxy/auth/me')
+      // Only a real profile is a session: a misrouted proxy can answer 200 with an HTML page.
+      me.value = res && typeof res === 'object' && Array.isArray(res.permissions) ? res : null
     }
     catch {
       me.value = null

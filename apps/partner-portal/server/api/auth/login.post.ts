@@ -15,9 +15,14 @@ export default defineEventHandler(async (event) => {
     ignoreResponseError: true,
   })
 
-  if (!response.ok || !response._data?.token) {
+  if (!response.ok) {
     setResponseStatus(event, response.status)
     return response._data
+  }
+
+  // A 2xx without a token did not come from the Laravel API (e.g. a misrouted NUXT_API_BASE).
+  if (!response._data?.token) {
+    throw createError({ statusCode: 502, statusMessage: 'Bad Gateway', data: { message: 'Bad gateway', code: 'API_UNAVAILABLE' } })
   }
 
   writeAuthCookie(event, response._data.token, response._data.expires_at)
