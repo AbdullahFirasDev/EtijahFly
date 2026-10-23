@@ -75,8 +75,9 @@ services:
     dockerfilePath: ./infrastructure/docker/backend.Dockerfile
     dockerContext: .
     healthCheckPath: /up
-    # Additive schema changes + permission catalogue sync + RLS on every table. Never drops data.
-    preDeployCommand: php artisan migrate --force && php artisan db:seed --class=PermissionSeeder --force && php artisan db:seed --class=ProviderSeeder --force && php artisan platform:harden-db
+    # Additive schema changes + permission catalogue sync + RLS on every table + private storage
+    # buckets. Never drops data.
+    preDeployCommand: php artisan migrate --force && php artisan db:seed --class=PermissionSeeder --force && php artisan db:seed --class=ProviderSeeder --force && php artisan platform:harden-db && php artisan platform:storage-setup
     envVars:
       - fromGroup: etijahfly-api
       - key: REDIS_URL
