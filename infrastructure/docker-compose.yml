@@ -1,0 +1,68 @@
+# Production-style stack. PostgreSQL and object storage are provided by Supabase (not here);
+# Redis runs locally in the stack. Secrets come from infrastructure/.env.production (never commit it).
+#
+#   docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env.production up -d --build
+#   docker compose -f infrastructure/docker-compose.yml exec api php artisan migrate --force
+#   docker compose -f infrastructure/docker-compose.yml exec api php artisan db:seed --class=PermissionSeeder --force
+
+x-api: &api
+  build: { context: .., dockerfile: infrastructure/docker/backend.Dockerfile, target: runtime }
+  env_file: .env.production
+  environment:
+    APP_ENV: production
+    APP_DEBUG: "false"
+    REDIS_HOST: redis
+    REDIS_CLIENT: phpredis
+    CACHE_STORE: redis
+    QUEUE_CONNECTION: redis
+    SESSION_DRIVER: array
+    LOG_CHANNEL: stderr
+    FILE_STORAGE_DRIVER: supabase
+    TRUSTED_PROXIES: "172.16.0.0/12,10.0.0.0/8"
+  depends_on: [redis]
+  restart: unless-stopped
+  volumes: [app-public:/var/www/html/public]
+
+services:
+  api:
+    <<: *api
+
+  horizon:
+    <<: *api
+    command: ["sh", "-c", "php artisan config:cache && php artisan horizon"]
+
+  scheduler:
+    <<: *api
+    command: ["sh", "-c", "php artisan config:cache && php artisan schedule:work"]
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?set REDIS_PASSWORD}"]
+    volumes: [redis-data:/data]
+    restart: unless-stopped
+
+  partner:
+    build: { context: .., dockerfile: infrastructure/docker/partner-portal.Dockerfile }
+    environment:
+      NUXT_API_BASE: http://web:8080/api/v1
+      NUXT_COOKIE_SECURE: "true"
+    restart: unless-stopped
+
+  admin:
+    build: { context: .., dockerfile: infrastructure/docker/admin-portal.Dockerfile }
+    environment:
+      API_BASE_URL: http://web:8080/api/v1
+    restart: unless-stopped
+
+  web:
+    image: nginx:1.27-alpine
+    ports: ["80:80"]
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - app-public:/var/www/html/public:ro
+    depends_on: [api, partner, admin]
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  app-public:

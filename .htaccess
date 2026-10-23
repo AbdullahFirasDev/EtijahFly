@@ -1,0 +1,4 @@
+# The monorepo lives inside XAMPP's htdocs for convenience only.
+# Nothing here is meant to be served by Apache (it would expose .env files,
+# vendor code and the portable toolchain). Each app runs on its own server.
+Require all denied

@@ -1,0 +1,37 @@
+{
+  "name": "etijahfly",
+  "private": true,
+  "description": "EtijahFly B2B flight distribution platform (monorepo)",
+  "workspaces": [
+    "packages/api-contracts",
+    "apps/partner-portal",
+    "apps/admin-portal"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "contracts:generate": "npm run generate -w @etijahfly/api-contracts",
+    "dev:partner": "npm run dev -w partner-portal",
+    "dev:admin": "npm run dev -w admin-portal",
+    "lint": "npm run lint -w partner-portal && npm run lint -w admin-portal",
+    "typecheck": "npm run typecheck -w @etijahfly/api-contracts && npm run typecheck -w partner-portal && npm run typecheck -w admin-portal",
+    "test": "npm run test -w partner-portal && npm run test -w admin-portal",
+    "build": "npm run build -w partner-portal && npm run build -w admin-portal",
+    "e2e": "npm run e2e -w partner-portal && npm run e2e -w admin-portal"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.3"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.2": true,
+    "unrs-resolver@1.12.2": true,
+    "vue-demi@0.14.10": true
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0"
+  }
+}

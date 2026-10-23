@@ -1,0 +1,36 @@
+{
+  "name": "partner-portal",
+  "private": true,
+  "type": "module",
+  "description": "EtijahFly partner (travel agency) portal - Nuxt 4, white-label, Arabic RTL first",
+  "scripts": {
+    "dev": "nuxt dev --port 3000",
+    "build": "nuxt build",
+    "preview": "node .output/server/index.mjs",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@etijahfly/api-contracts": "1.0.0",
+    "@iconify-json/lucide": "^1.2.0",
+    "@nuxt/ui": "^4.12.0",
+    "@nuxtjs/i18n": "^10.6.0",
+    "nuxt": "^4.6.2",
+    "tailwindcss": "^4.3.3",
+    "uqr": "^0.1.3",
+    "vue": "^3.5.0",
+    "vue-router": "^5.4.0"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.17.0",
+    "@playwright/test": "^1.64.1",
+    "eslint": "^10.13.0",
+    "happy-dom": "^21.0.4",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5",
+    "vue-tsc": "^3.3.13"
+  }
+}

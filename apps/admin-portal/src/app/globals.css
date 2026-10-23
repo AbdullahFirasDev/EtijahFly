@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@source "../../../../packages/api-contracts/src";
+
+@theme {
+  --font-sans: var(--font-plex-arabic), ui-sans-serif, system-ui, sans-serif;
+  /* Kufic display face shared with the partner portal: wordmark, page titles, key figures. */
+  --font-display: var(--font-kufi), var(--font-plex-arabic), ui-sans-serif, sans-serif;
+
+  /* Platform lapis (Ishtar Gate blue): actions and the current place in the app. */
+  --color-brand-50: #eef2fa;
+  --color-brand-100: #dae3f4;
+  --color-brand-500: #2752a6;
+  --color-brand-600: #1f4389;
+  --color-brand-700: #1b376f;
+
+  /* Ochre marks work that is waiting on someone; ledger ink colours for money. */
+  --color-ochre-50: #fbf6ec;
+  --color-ochre-600: #96651d;
+  --color-ochre-700: #744e19;
+  --color-gain: #1b6b45;
+  --color-loss: #b42318;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-slate-100 text-slate-900 antialiased;
+  font-feature-settings: "tnum" 1;
+}
+
+.ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+:focus-visible {
+  @apply outline-2 outline-offset-2 outline-brand-500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

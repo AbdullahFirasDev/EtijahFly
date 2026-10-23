@@ -1,0 +1,129 @@
+# Render Blueprint for the EtijahFly API (Laravel). The partner and admin portals deploy to Vercel.
+# PostgreSQL and file storage are Supabase; Redis (queues, cache, locks) is Render Key Value.
+#
+# Values marked `sync: false` are entered in the Render dashboard when the Blueprint is created
+# (never committed). See docs/deployment-vercel-render.md for what each one is and where to get it.
+
+envVarGroups:
+  - name: etijahfly-api
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_NAME
+        value: EtijahFly
+      - key: APP_LOCALE
+        value: ar
+      - key: APP_KEY # base64:… from `php artisan key:generate --show`
+        sync: false
+      - key: APP_URL # public URL of this API service, e.g. https://etijahfly-api.onrender.com
+        sync: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+      # Supabase session pooler (port 5432) connection string, with sslmode=require
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        sync: false
+      - key: REDIS_CLIENT
+        value: phpredis
+      - key: CACHE_STORE
+        value: redis
+      - key: QUEUE_CONNECTION
+        value: redis
+      - key: SESSION_DRIVER
+        value: array
+      # Files (logos, booking PDFs, payment proofs) must live in Supabase Storage: container disks are ephemeral.
+      - key: FILE_STORAGE_DRIVER
+        value: supabase
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      # The two Vercel portals (links in e-mails, CORS)
+      - key: PARTNER_PORTAL_URL
+        sync: false
+      - key: ADMIN_PORTAL_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      # Shared with both portals so the API trusts the end user's IP they forward.
+      - key: PORTAL_PROXY_SECRET
+        generateValue: true
+      - key: AIRLINES_API_KEY
+        sync: false
+      - key: AIRLINES_API_MONTHLY_BUDGET
+        value: "90"
+      # Simulated provider: keep off in production (its offers are test data, not real flights).
+      - key: MOCK_FLIGHT_PROVIDER_ENABLED
+        value: "false"
+      # Until a real mail provider is configured, invitations/password-reset e-mails are only logged.
+      - key: MAIL_MAILER
+        value: log
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+
+services:
+  - type: web
+    name: etijahfly-api
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    dockerfilePath: ./infrastructure/docker/backend.Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    # Additive schema changes + permission catalogue sync + RLS on every table. Never drops data.
+    preDeployCommand: php artisan migrate --force && php artisan db:seed --class=PermissionSeeder --force && php artisan db:seed --class=ProviderSeeder --force && php artisan platform:harden-db
+    envVars:
+      - fromGroup: etijahfly-api
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: etijahfly-redis
+          property: connectionString
+
+  # Queue workers: booking documents (PDF), notifications, ticketing verification.
+  - type: worker
+    name: etijahfly-horizon
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    dockerfilePath: ./infrastructure/docker/backend.Dockerfile
+    dockerContext: .
+    dockerCommand: sh -c "php artisan config:cache && php artisan horizon"
+    envVars:
+      - fromGroup: etijahfly-api
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: etijahfly-redis
+          property: connectionString
+
+  # Scheduler: expires unpaid holds every minute, hold warnings, daily pruning.
+  - type: worker
+    name: etijahfly-scheduler
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    dockerfilePath: ./infrastructure/docker/backend.Dockerfile
+    dockerContext: .
+    dockerCommand: sh -c "php artisan config:cache && php artisan schedule:work"
+    envVars:
+      - fromGroup: etijahfly-api
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: etijahfly-redis
+          property: connectionString
+
+  - type: keyvalue
+    name: etijahfly-redis
+    plan: starter
+    region: frankfurt
+    # Queues must never be evicted.
+    maxmemoryPolicy: noeviction
+    # Reachable only from this Render account's private network.
+    ipAllowList: []
