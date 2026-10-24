@@ -19,7 +19,10 @@ class RunReleaseTasks extends Command
     public function handle(): int
     {
         $release = (string) config('platform.release');
-        if ($this->option('once') && $release !== '' && Cache::get(self::MARKER) === $release) {
+        // Kept in the database: the default cache store may be the container's file cache, which
+        // does not survive a restart.
+        $marker = Cache::store('database');
+        if ($this->option('once') && $release !== '' && $marker->get(self::MARKER) === $release) {
             $this->info("Release tasks already applied for {$release}.");
 
             return self::SUCCESS;
@@ -37,7 +40,7 @@ class RunReleaseTasks extends Command
         }
 
         if ($release !== '') {
-            Cache::forever(self::MARKER, $release);
+            $marker->forever(self::MARKER, $release);
         }
 
         return self::SUCCESS;

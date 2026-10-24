@@ -8,7 +8,7 @@ it('runs the release tasks once per release with --once', function () {
     config(['platform.release' => 'abc123']);
 
     $this->artisan('platform:release-tasks', ['--once' => true])->assertSuccessful();
-    expect(Cache::get('platform:release-tasks'))->toBe('abc123');
+    expect(Cache::store('database')->get('platform:release-tasks'))->toBe('abc123');
 
     $this->artisan('platform:release-tasks', ['--once' => true])
         ->expectsOutputToContain('already applied for abc123')
@@ -18,7 +18,7 @@ it('runs the release tasks once per release with --once', function () {
     $this->artisan('platform:release-tasks', ['--once' => true])
         ->doesntExpectOutputToContain('already applied')
         ->assertSuccessful();
-    expect(Cache::get('platform:release-tasks'))->toBe('def456');
+    expect(Cache::store('database')->get('platform:release-tasks'))->toBe('def456');
 });
 
 it('keeps every system role permission set after re-syncing the catalogue', function () {

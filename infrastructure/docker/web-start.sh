@@ -7,6 +7,8 @@ php artisan event:cache
 
 # Single-service hosting (e.g. Render's free tier: no pre-deploy step, no worker services).
 # Both switches are off by default; render.yaml runs these as a pre-deploy step and separate workers.
+# Without Redis, pair them with QUEUE_CONNECTION=database and, while there is exactly one instance,
+# CACHE_STORE=file (rate limiting and locks then cost no database round trips).
 if [ "${RUN_RELEASE_TASKS:-false}" = "true" ]; then
     # Blocking: the code being started must never run against an older schema.
     php artisan migrate --force
