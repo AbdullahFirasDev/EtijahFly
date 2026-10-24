@@ -12,6 +12,10 @@ return [
     // separate host (see TrustPortalClientIp). Empty = disabled.
     'portal_proxy_secret' => env('PORTAL_PROXY_SECRET'),
 
+    // Identifies the deployed code (Render sets RENDER_GIT_COMMIT) so start-up release tasks run
+    // once per release instead of on every cold start (see platform:release-tasks --once).
+    'release' => env('APP_RELEASE', env('RENDER_GIT_COMMIT')),
+
     'auth' => [
         'token_ttl_minutes' => (int) env('AUTH_TOKEN_TTL_MINUTES', 480),
         'token_idle_minutes' => (int) env('AUTH_TOKEN_IDLE_MINUTES', 120),

@@ -8,11 +8,11 @@ php artisan event:cache
 # Single-service hosting (e.g. Render's free tier: no pre-deploy step, no worker services).
 # Both switches are off by default; render.yaml runs these as a pre-deploy step and separate workers.
 if [ "${RUN_RELEASE_TASKS:-false}" = "true" ]; then
+    # Blocking: the code being started must never run against an older schema.
     php artisan migrate --force
-    php artisan db:seed --class=PermissionSeeder --force
-    php artisan db:seed --class=ProviderSeeder --force
-    php artisan platform:harden-db
-    php artisan platform:storage-setup
+    # The rest is idempotent and slow with a distant database, so it runs in the background (the host
+    # gives up if the port does not open in time) and only once per release, not on every cold start.
+    php artisan platform:release-tasks --once &
 fi
 if [ "${RUN_WORKERS_IN_WEB:-false}" = "true" ]; then
     # Same limits as the Horizon supervisor (config/horizon.php); jobs re-dispatch themselves to retry.
@@ -21,6 +21,8 @@ if [ "${RUN_WORKERS_IN_WEB:-false}" = "true" ]; then
     (while true; do php artisan schedule:work; sleep 5; done) &
 fi
 
+# /tmp can be a fresh empty filesystem at run time, so the build-time directory may be gone.
+mkdir -p /tmp/nginx
 sed "s/__PORT__/${PORT:-10000}/" /etc/nginx/etijahfly.conf.template > /tmp/nginx/nginx.conf
 # php-fpm logs to stderr (official image config); if it dies, /up fails and the host restarts us.
 php-fpm &
