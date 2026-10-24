@@ -42,6 +42,13 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        // Sanctum registers this guard with no provider. auth:sanctum makes it the current guard,
+        // and spatie's Role::users() resolves the user model from the current guard's provider.
+        // With a provider, Sanctum also checks that a token's owner is a User.
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
+        ],
     ],
 
     /*
