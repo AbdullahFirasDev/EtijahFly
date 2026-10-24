@@ -63,6 +63,9 @@ envVarGroups:
       # Until a real mail provider is configured, invitations/password-reset e-mails are only logged.
       - key: MAIL_MAILER
         value: log
+      # Logged mails are debug-level; this channel keeps them visible despite LOG_LEVEL=info.
+      - key: MAIL_LOG_CHANNEL
+        value: mail
       - key: MAIL_FROM_ADDRESS
         sync: false
 

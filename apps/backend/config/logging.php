@@ -113,6 +113,20 @@ return [
             'processors' => [PsrLogMessageProcessor::class],
         ],
 
+        // MAIL_MAILER=log writes each mail at debug level, so with LOG_LEVEL=info the invitation and
+        // password-reset links would be dropped. MAIL_LOG_CHANNEL=mail keeps them visible on stderr
+        // until a real mail provider is configured.
+        'mail' => [
+            'driver' => 'monolog',
+            'level' => 'debug',
+            'handler' => StreamHandler::class,
+            'handler_with' => [
+                'stream' => 'php://stderr',
+            ],
+            'formatter' => env('LOG_STDERR_FORMATTER'),
+            'processors' => [PsrLogMessageProcessor::class],
+        ],
+
         'syslog' => [
             'driver' => 'syslog',
             'level' => env('LOG_LEVEL', 'debug'),
