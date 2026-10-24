@@ -36,9 +36,10 @@ USER root
 RUN apt-get update && apt-get install -y --no-install-recommends nginx \
     && rm -rf /var/lib/apt/lists/* /etc/nginx/sites-enabled/default \
     && mkdir -p /tmp/nginx && chown -R www-data:www-data /tmp/nginx /var/lib/nginx \
-    # nginx is in the same container: keep php-fpm (FastCGI) off the network interfaces.
-    && sed -i 's/^listen = 9000$/listen = 127.0.0.1:9000/' /usr/local/etc/php-fpm.d/zz-docker.conf \
-    && grep -q '^listen = 127.0.0.1:9000$' /usr/local/etc/php-fpm.d/zz-docker.conf
+    # nginx is in the same container: keep php-fpm (FastCGI) off the network interfaces. Loaded after
+    # the image's zz-docker.conf (listen = 9000), so it overrides it; the build fails if it does not.
+    && printf '[www]\nlisten = 127.0.0.1:9000\n' > /usr/local/etc/php-fpm.d/zzz-web-listen.conf \
+    && php-fpm -tt 2>&1 | grep -q 'listen = 127.0.0.1:9000'
 COPY infrastructure/docker/web-nginx.conf /etc/nginx/etijahfly.conf.template
 COPY infrastructure/docker/web-start.sh /usr/local/bin/web-start
 RUN chmod 755 /usr/local/bin/web-start
